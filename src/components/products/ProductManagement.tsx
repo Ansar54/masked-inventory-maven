@@ -1,115 +1,113 @@
 
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Product } from '@/utils/types';
+import { Button } from '@/components/ui/button';
+import { Package, Plus } from 'lucide-react';
+import ProductTable from './ProductTable';
+import ProductDetailsModal from './ProductDetailsModal';
+import NewProductForm from './NewProductForm';
+import SearchFilters from './SearchFilters';
 import { useProductData } from '@/hooks/useProductData';
 import { useProductFilter } from '@/hooks/useProductFilter';
-import ProductActions from './ProductActions';
-import SearchFilters from './SearchFilters';
-import ProductTabContent from './ProductTabContent';
-import ProductDetailsModal from './ProductDetailsModal';
-import SkuGeneratorModal from './SkuGeneratorModal';
-import NewProductForm from './NewProductForm';
-import { generateFNSKU } from '@/utils/skuGenerator';
-import { toast } from 'sonner';
+import { Product } from '@/utils/types';
 
 const ProductManagement = () => {
-  // Product data state and fetching
   const { products, maskedProducts, isLoading, refreshProducts } = useProductData();
-  
-  // Filtering and search
-  const { searchTerm, setSearchTerm, activeTab, setActiveTab, filteredProducts } = useProductFilter(products);
-  
-  // Modal states
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [skuGeneratorOpen, setSkuGeneratorOpen] = useState(false);
-  const [newProductModalOpen, setNewProductModalOpen] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showNewProductForm, setShowNewProductForm] = useState(false);
+  const { 
+    filteredProducts, 
+    searchTerm,
+    activeTab,
+    setSearchTerm,
+    setActiveTab,
+    handleFilterByStatus,
+    handleFilterByCategory,
+    selectedFilters
+  } = useProductFilter(products, maskedProducts);
 
-  // Handle view details
   const handleViewDetails = (product: Product) => {
     setSelectedProduct(product);
-    setModalOpen(true);
+    setShowDetailsModal(true);
   };
 
-  // Handle SKU generation
-  const handleGenerateFNSKU = (category: string, productName: string, isMasked: boolean) => {
-    const newFnsku = generateFNSKU(category, productName, isMasked);
-    toast.success(`Generated FNSKU: ${newFnsku}`);
-    setSkuGeneratorOpen(false);
+  const handleCloseDetails = () => {
+    setShowDetailsModal(false);
+    setSelectedProduct(null);
   };
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <h2 className="text-3xl font-bold tracking-tight">Product Management</h2>
-        <ProductActions 
-          onOpenSkuGenerator={() => setSkuGeneratorOpen(true)} 
-          onOpenNewProductForm={() => setNewProductModalOpen(true)}
-        />
+    <div className="container mx-auto py-8 space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Products</h1>
+          <p className="text-muted-foreground">
+            Manage your products and their Amazon mask listings
+          </p>
+        </div>
+        <Button className="gap-2" onClick={() => setShowNewProductForm(true)}>
+          <Plus size={16} />
+          <span>Add Product</span>
+        </Button>
       </div>
       
-      <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="all">All Products</TabsTrigger>
-          <TabsTrigger value="masked">Masked Products</TabsTrigger>
-          <TabsTrigger value="unmasked">Unmasked Products</TabsTrigger>
-        </TabsList>
-      
-        {/* Search and Filter */}
-        <SearchFilters searchTerm={searchTerm} onSearchChange={setSearchTerm} />
-
-        <TabsContent value="all" className="space-y-4">
-          <ProductTabContent 
-            isLoading={isLoading}
-            activeTab="all"
-            filteredProducts={filteredProducts}
-            maskedProducts={maskedProducts}
-            onViewDetails={handleViewDetails}
+      <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
+        <div className="flex flex-col sm:flex-row justify-between gap-4">
+          <TabsList>
+            <TabsTrigger value="all" onClick={() => handleFilterByStatus('all')}>
+              All Products
+            </TabsTrigger>
+            <TabsTrigger value="masked" onClick={() => handleFilterByStatus('masked')}>
+              Masked Products
+            </TabsTrigger>
+            <TabsTrigger value="unmasked" onClick={() => handleFilterByStatus('unmasked')}>
+              Unmasked Products
+            </TabsTrigger>
+          </TabsList>
+          
+          <SearchFilters
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            selectedFilters={selectedFilters}
+            handleFilterByCategory={handleFilterByCategory}
           />
-        </TabsContent>
+        </div>
         
-        <TabsContent value="masked" className="space-y-4">
-          <ProductTabContent 
-            isLoading={isLoading}
-            activeTab="masked"
-            filteredProducts={filteredProducts}
-            maskedProducts={maskedProducts}
-            onViewDetails={handleViewDetails}
-          />
-        </TabsContent>
-        
-        <TabsContent value="unmasked" className="space-y-4">
-          <ProductTabContent 
-            isLoading={isLoading}
-            activeTab="unmasked"
-            filteredProducts={filteredProducts}
-            maskedProducts={maskedProducts}
-            onViewDetails={handleViewDetails}
-          />
+        <TabsContent value={activeTab} className="pt-4">
+          {isLoading ? (
+            <div className="bg-card rounded-lg p-8 text-center animate-pulse">
+              <Package className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
+              <p>Loading products...</p>
+            </div>
+          ) : (
+            <ProductTable 
+              products={filteredProducts} 
+              maskedProducts={maskedProducts} 
+              onViewDetails={handleViewDetails}
+              refreshProducts={refreshProducts}
+            />
+          )}
         </TabsContent>
       </Tabs>
-
-      {/* Modals */}
-      {modalOpen && selectedProduct && (
-        <ProductDetailsModal 
+      
+      {/* Product Details Modal */}
+      {showDetailsModal && selectedProduct && (
+        <ProductDetailsModal
           product={selectedProduct}
           maskedProduct={maskedProducts[selectedProduct.id] || null}
-          onClose={() => setModalOpen(false)}
+          onClose={handleCloseDetails}
         />
       )}
-
-      {skuGeneratorOpen && (
-        <SkuGeneratorModal
-          onGenerate={handleGenerateFNSKU}
-          onClose={() => setSkuGeneratorOpen(false)}
-        />
-      )}
-
-      {newProductModalOpen && (
-        <NewProductForm
-          onClose={() => setNewProductModalOpen(false)}
-          onProductCreated={refreshProducts}
+      
+      {/* New Product Form */}
+      {showNewProductForm && (
+        <NewProductForm 
+          onClose={() => setShowNewProductForm(false)} 
+          onProductAdded={() => {
+            refreshProducts();
+            setShowNewProductForm(false);
+          }}
         />
       )}
     </div>
