@@ -9,7 +9,7 @@ export interface User {
 export interface Product {
   id: string;
   name: string;
-  fnsku: string; // Changed from sku to fnsku
+  // Removed fnsku from here as requested
   price: number;
   stock: number;
   description: string;
@@ -22,13 +22,13 @@ export interface Product {
 export interface MaskedProduct {
   id: string;
   name: string;
-  fnsku: string; // Changed from sku to fnsku
+  fnsku: string; // This is where we'll store the FNSKU
   price: number;
   description: string;
   images: string[];
   realProductId: string;
   amazonPrice: number;
-  amazonFnsku: string; // Changed from amazonSku to amazonFnsku
+  amazonFnsku: string;
   status: 'active' | 'inactive';
   createdAt: string;
   updatedAt: string;
@@ -70,7 +70,7 @@ export interface DbConnection {
 export interface DbProduct {
   id: string;
   pid: string;
-  fnsku: string;
+  // Removed fnsku from here
   name: string;
   price: number;
   stock: number;

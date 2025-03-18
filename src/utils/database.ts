@@ -11,7 +11,7 @@ export class MockDatabase implements DbConnection {
       {
         id: '1',
         pid: 'PID-001',
-        fnsku: 'FNSKU-001',
+        // Removed fnsku 
         name: 'Premium Leather Office Chair',
         price: 299.99,
         stock: 25,
@@ -26,7 +26,7 @@ export class MockDatabase implements DbConnection {
       {
         id: '2',
         pid: 'PID-002',
-        fnsku: 'FNSKU-002',
+        // Removed fnsku
         name: 'Adjustable Standing Desk',
         price: 449.99,
         stock: 12,
@@ -41,7 +41,7 @@ export class MockDatabase implements DbConnection {
       {
         id: '3',
         pid: 'PID-003',
-        fnsku: 'FNSKU-003',
+        // Removed fnsku
         name: 'Wireless Noise-Cancelling Headphones',
         price: 179.99,
         stock: 38,
@@ -56,7 +56,7 @@ export class MockDatabase implements DbConnection {
       {
         id: '4',
         pid: 'PID-004',
-        fnsku: 'FNSKU-004',
+        // Removed fnsku
         name: 'Mechanical Keyboard with RGB',
         price: 129.99,
         stock: 3,
@@ -70,7 +70,7 @@ export class MockDatabase implements DbConnection {
       {
         id: '5',
         pid: 'PID-005',
-        fnsku: 'FNSKU-005',
+        // Removed fnsku
         name: 'Ultrawide Curved Monitor',
         price: 549.99,
         stock: 7,

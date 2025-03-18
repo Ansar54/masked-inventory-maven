@@ -49,8 +49,8 @@ const ProductDetailsModal = ({ product, maskedProduct, onClose }: ProductDetails
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">FNSKU</p>
-                    <p className="font-mono">{product.fnsku}</p>
+                    <p className="text-sm text-muted-foreground">Product ID</p>
+                    <p className="font-mono">{product.id}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Price</p>

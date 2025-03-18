@@ -40,7 +40,7 @@ const ProductManagement = () => {
           const product: Product = {
             id: dbProduct.id,
             name: dbProduct.name,
-            fnsku: dbProduct.fnsku,
+            // Removed fnsku
             price: dbProduct.price,
             stock: dbProduct.stock,
             description: dbProduct.description,
@@ -57,7 +57,7 @@ const ProductManagement = () => {
             const maskedProduct: MaskedProduct = {
               id: `m${dbProduct.id}`,
               name: `Generic ${dbProduct.name}`,
-              fnsku: dbProduct.amazonFnsku || 'MASK-FNSKU',
+              fnsku: dbProduct.amazonFnsku || 'MASK-FNSKU', // Store FNSKU here
               price: dbProduct.price,
               description: `Generic version of ${dbProduct.description}`,
               images: dbProduct.images,
@@ -89,7 +89,7 @@ const ProductManagement = () => {
   // Filter products by search term and active tab
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        product.fnsku.toLowerCase().includes(searchTerm.toLowerCase());
+                        (product.id && product.id.toLowerCase().includes(searchTerm.toLowerCase()));
     
     if (activeTab === 'all') return matchesSearch;
     if (activeTab === 'masked') return matchesSearch && !!maskedProducts[product.id];
@@ -125,7 +125,7 @@ const ProductManagement = () => {
         const product: Product = {
           id: dbProduct.id,
           name: dbProduct.name,
-          fnsku: dbProduct.fnsku,
+          // Removed fnsku
           price: dbProduct.price,
           stock: dbProduct.stock,
           description: dbProduct.description,
@@ -141,7 +141,7 @@ const ProductManagement = () => {
           const maskedProduct: MaskedProduct = {
             id: `m${dbProduct.id}`,
             name: `Generic ${dbProduct.name}`,
-            fnsku: dbProduct.amazonFnsku || 'MASK-FNSKU',
+            fnsku: dbProduct.amazonFnsku || 'MASK-FNSKU', // Store FNSKU here
             price: dbProduct.price,
             description: `Generic version of ${dbProduct.description}`,
             images: dbProduct.images,
@@ -215,17 +215,31 @@ const ProductManagement = () => {
         </TabsContent>
         
         <TabsContent value="masked" className="space-y-4">
-          <TabContent 
-            title="Masked Products" 
-            description="View and manage products that have been masked for Amazon FBA."
-          />
+          {isLoading ? (
+            <div className="p-8 text-center">
+              <p className="text-muted-foreground">Loading masked products...</p>
+            </div>
+          ) : (
+            <ProductTable 
+              products={filteredProducts.filter(product => !!maskedProducts[product.id])}
+              maskedProducts={maskedProducts}
+              onViewDetails={handleViewDetails}
+            />
+          )}
         </TabsContent>
         
         <TabsContent value="unmasked" className="space-y-4">
-          <TabContent 
-            title="Unmasked Products"
-            description="Products that need to be masked before Amazon FBA integration."
-          />
+          {isLoading ? (
+            <div className="p-8 text-center">
+              <p className="text-muted-foreground">Loading unmasked products...</p>
+            </div>
+          ) : (
+            <ProductTable 
+              products={filteredProducts.filter(product => !maskedProducts[product.id])}
+              maskedProducts={maskedProducts}
+              onViewDetails={handleViewDetails}
+            />
+          )}
         </TabsContent>
       </Tabs>
 
