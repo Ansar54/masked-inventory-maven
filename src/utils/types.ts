@@ -9,7 +9,7 @@ export interface User {
 export interface Product {
   id: string;
   name: string;
-  sku: string;
+  fnsku: string; // Changed from sku to fnsku
   price: number;
   stock: number;
   description: string;
@@ -22,13 +22,13 @@ export interface Product {
 export interface MaskedProduct {
   id: string;
   name: string;
-  sku: string;
+  fnsku: string; // Changed from sku to fnsku
   price: number;
   description: string;
   images: string[];
   realProductId: string;
   amazonPrice: number;
-  amazonSku: string;
+  amazonFnsku: string; // Changed from amazonSku to amazonFnsku
   status: 'active' | 'inactive';
   createdAt: string;
   updatedAt: string;
@@ -54,4 +54,31 @@ export interface DashboardStats {
   lowStockCount: number;
   amazonOrdersToday: number;
   totalSales: number;
+}
+
+// Database interfaces
+export interface DbConnection {
+  products: Record<string, DbProduct>;
+  connect: () => Promise<boolean>;
+  getProduct: (id: string) => Promise<DbProduct | null>;
+  getAllProducts: () => Promise<DbProduct[]>;
+  createProduct: (product: Omit<DbProduct, 'id'>) => Promise<DbProduct>;
+  updateProduct: (id: string, product: Partial<DbProduct>) => Promise<DbProduct | null>;
+  deleteProduct: (id: string) => Promise<boolean>;
+}
+
+export interface DbProduct {
+  id: string;
+  pid: string;
+  fnsku: string;
+  name: string;
+  price: number;
+  stock: number;
+  description: string;
+  images: string[];
+  category: string;
+  amazonFnsku?: string;
+  isMasked: boolean;
+  createdAt: string;
+  updatedAt: string;
 }

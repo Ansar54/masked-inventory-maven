@@ -49,8 +49,8 @@ const ProductDetailsModal = ({ product, maskedProduct, onClose }: ProductDetails
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">SKU</p>
-                    <p className="font-mono">{product.sku}</p>
+                    <p className="text-sm text-muted-foreground">FNSKU</p>
+                    <p className="font-mono">{product.fnsku}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Price</p>
@@ -91,8 +91,8 @@ const ProductDetailsModal = ({ product, maskedProduct, onClose }: ProductDetails
                     <p>{maskedProduct.name}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Amazon SKU</p>
-                    <p className="font-mono">{maskedProduct.amazonSku}</p>
+                    <p className="text-sm text-muted-foreground">Amazon FNSKU</p>
+                    <p className="font-mono">{maskedProduct.amazonFnsku}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Amazon Price</p>

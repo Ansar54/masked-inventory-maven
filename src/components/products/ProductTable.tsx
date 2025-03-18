@@ -24,8 +24,8 @@ const ProductTable = ({ products, maskedProducts, onViewDetails }: ProductTableP
           <thead>
             <tr className="border-b">
               <th className="text-left p-4 font-medium text-muted-foreground">Product</th>
-              <th className="text-left p-4 font-medium text-muted-foreground">Real SKU</th>
-              <th className="text-left p-4 font-medium text-muted-foreground">Masked SKU</th>
+              <th className="text-left p-4 font-medium text-muted-foreground">Real FNSKU</th>
+              <th className="text-left p-4 font-medium text-muted-foreground">Masked FNSKU</th>
               <th className="text-left p-4 font-medium text-muted-foreground">Price</th>
               <th className="text-left p-4 font-medium text-muted-foreground">Stock</th>
               <th className="text-left p-4 font-medium text-muted-foreground">Category</th>
@@ -62,10 +62,10 @@ const ProductTable = ({ products, maskedProducts, onViewDetails }: ProductTableP
                       </div>
                     </div>
                   </td>
-                  <td className="p-4 text-sm font-mono">{product.sku}</td>
+                  <td className="p-4 text-sm font-mono">{product.fnsku}</td>
                   <td className="p-4 text-sm font-mono">
                     {hasMaskedProduct ? (
-                      maskedProduct?.amazonSku
+                      maskedProduct?.amazonFnsku
                     ) : (
                       <span className="text-muted-foreground italic">No mask</span>
                     )}

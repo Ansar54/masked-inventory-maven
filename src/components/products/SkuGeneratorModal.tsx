@@ -23,7 +23,7 @@ const SkuGeneratorModal = ({ onGenerate, onClose }: SkuGeneratorModalProps) => {
       <div className="bg-background rounded-lg shadow-elevated max-w-md w-full animate-scale-in">
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-semibold">Generate SKU</h3>
+            <h3 className="text-xl font-semibold">Generate FNSKU</h3>
             <button 
               onClick={onClose}
               className="text-muted-foreground hover:text-foreground"
@@ -68,7 +68,7 @@ const SkuGeneratorModal = ({ onGenerate, onClose }: SkuGeneratorModalProps) => {
                 onChange={(e) => setSkuInfo({...skuInfo, isMasked: e.target.checked})}
                 className="mr-2"
               />
-              <label htmlFor="isMasked" className="text-sm">Generate Masked SKU for Amazon</label>
+              <label htmlFor="isMasked" className="text-sm">Generate Masked FNSKU for Amazon</label>
             </div>
             
             <div className="pt-4 flex justify-end gap-3">
@@ -79,7 +79,7 @@ const SkuGeneratorModal = ({ onGenerate, onClose }: SkuGeneratorModalProps) => {
                 onClick={handleSubmit} 
                 disabled={!skuInfo.productName || !skuInfo.category}
               >
-                Generate SKU
+                Generate FNSKU
               </Button>
             </div>
           </div>

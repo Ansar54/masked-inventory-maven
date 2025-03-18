@@ -1,125 +1,18 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Barcode } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Product, MaskedProduct } from '@/utils/types';
-import { generateSKU } from '@/utils/skuGenerator';
+import { Product, MaskedProduct, DbProduct } from '@/utils/types';
+import { generateFNSKU } from '@/utils/skuGenerator';
+import { dbConnection } from '@/utils/database';
 import ProductTable from './ProductTable';
 import ProductDetailsModal from './ProductDetailsModal';
 import SkuGeneratorModal from './SkuGeneratorModal';
 import SearchFilters from './SearchFilters';
 import TabContent from './TabContent';
-
-// Mock products data
-const mockProducts: Product[] = [
-  {
-    id: '1',
-    name: 'Premium Leather Office Chair',
-    sku: 'CHAIR-001',
-    price: 299.99,
-    stock: 25,
-    description: 'High-quality ergonomic office chair with genuine leather upholstery.',
-    images: ['/placeholder.svg'],
-    category: 'Furniture',
-    createdAt: '2023-08-01T00:00:00Z',
-    updatedAt: '2023-08-15T00:00:00Z',
-  },
-  {
-    id: '2',
-    name: 'Adjustable Standing Desk',
-    sku: 'DESK-002',
-    price: 449.99,
-    stock: 12,
-    description: 'Electric standing desk with memory settings and spacious surface.',
-    images: ['/placeholder.svg'],
-    category: 'Furniture',
-    createdAt: '2023-07-20T00:00:00Z',
-    updatedAt: '2023-08-10T00:00:00Z',
-  },
-  {
-    id: '3',
-    name: 'Wireless Noise-Cancelling Headphones',
-    sku: 'AUDIO-003',
-    price: 179.99,
-    stock: 38,
-    description: 'Premium wireless headphones with active noise cancellation and 30-hour battery life.',
-    images: ['/placeholder.svg'],
-    category: 'Electronics',
-    createdAt: '2023-08-05T00:00:00Z',
-    updatedAt: '2023-08-20T00:00:00Z',
-  },
-  {
-    id: '4',
-    name: 'Mechanical Keyboard with RGB',
-    sku: 'KB-004',
-    price: 129.99,
-    stock: 3,
-    description: 'Mechanical gaming keyboard with customizable RGB lighting and programmable macros.',
-    images: ['/placeholder.svg'],
-    category: 'Electronics',
-    createdAt: '2023-06-15T00:00:00Z',
-    updatedAt: '2023-08-18T00:00:00Z',
-  },
-  {
-    id: '5',
-    name: 'Ultrawide Curved Monitor',
-    sku: 'MON-005',
-    price: 549.99,
-    stock: 7,
-    description: '34-inch ultrawide curved monitor with high resolution and HDR support.',
-    images: ['/placeholder.svg'],
-    category: 'Electronics',
-    createdAt: '2023-07-10T00:00:00Z',
-    updatedAt: '2023-08-12T00:00:00Z',
-  },
-];
-
-// Mock masked products
-const mockMaskedProducts: Record<string, MaskedProduct> = {
-  '1': {
-    id: 'm1',
-    name: 'Generic Office Chair',
-    sku: 'GEN-CHAIR-001',
-    price: 299.99,
-    description: 'Basic office chair for work environments. Average quality.',
-    images: ['/placeholder.svg'],
-    realProductId: '1',
-    amazonPrice: 449.99,
-    amazonSku: 'AMZN-CHAIR-001',
-    status: 'active',
-    createdAt: '2023-08-02T00:00:00Z',
-    updatedAt: '2023-08-15T00:00:00Z',
-  },
-  '2': {
-    id: 'm2',
-    name: 'Standard Computer Desk',
-    sku: 'GEN-DESK-002',
-    price: 449.99,
-    description: 'Plain computer desk with basic functionality. Does the job.',
-    images: ['/placeholder.svg'],
-    realProductId: '2',
-    amazonPrice: 599.99,
-    amazonSku: 'AMZN-DESK-002',
-    status: 'active',
-    createdAt: '2023-07-22T00:00:00Z',
-    updatedAt: '2023-08-10T00:00:00Z',
-  },
-  '3': {
-    id: 'm3',
-    name: 'Basic Headphones',
-    sku: 'GEN-AUDIO-003',
-    price: 179.99,
-    description: 'Simple headphones. Not the best quality but usable.',
-    images: ['/placeholder.svg'],
-    realProductId: '3',
-    amazonPrice: 249.99,
-    amazonSku: 'AMZN-AUDIO-003',
-    status: 'active',
-    createdAt: '2023-08-06T00:00:00Z',
-    updatedAt: '2023-08-20T00:00:00Z',
-  },
-};
+import NewProductForm from './NewProductForm';
+import { toast } from 'sonner';
 
 const ProductManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -127,15 +20,80 @@ const ProductManagement = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
   const [skuGeneratorOpen, setSkuGeneratorOpen] = useState(false);
+  const [newProductModalOpen, setNewProductModalOpen] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [maskedProducts, setMaskedProducts] = useState<Record<string, MaskedProduct>>({});
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load products from database
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        await dbConnection.connect();
+        const dbProducts = await dbConnection.getAllProducts();
+        
+        // Convert DB products to Product and MaskedProduct format
+        const productsList: Product[] = [];
+        const maskedProductsMap: Record<string, MaskedProduct> = {};
+        
+        dbProducts.forEach(dbProduct => {
+          const product: Product = {
+            id: dbProduct.id,
+            name: dbProduct.name,
+            fnsku: dbProduct.fnsku,
+            price: dbProduct.price,
+            stock: dbProduct.stock,
+            description: dbProduct.description,
+            images: dbProduct.images,
+            category: dbProduct.category,
+            createdAt: dbProduct.createdAt,
+            updatedAt: dbProduct.updatedAt,
+          };
+          
+          productsList.push(product);
+          
+          // If this product has an Amazon FNSKU, it's masked
+          if (dbProduct.isMasked && dbProduct.amazonFnsku) {
+            const maskedProduct: MaskedProduct = {
+              id: `m${dbProduct.id}`,
+              name: `Generic ${dbProduct.name}`,
+              fnsku: dbProduct.amazonFnsku || 'MASK-FNSKU',
+              price: dbProduct.price,
+              description: `Generic version of ${dbProduct.description}`,
+              images: dbProduct.images,
+              realProductId: dbProduct.id,
+              amazonPrice: dbProduct.price * 1.5, // Example markup
+              amazonFnsku: dbProduct.amazonFnsku,
+              status: 'active',
+              createdAt: dbProduct.createdAt,
+              updatedAt: dbProduct.updatedAt
+            };
+            
+            maskedProductsMap[dbProduct.id] = maskedProduct;
+          }
+        });
+        
+        setProducts(productsList);
+        setMaskedProducts(maskedProductsMap);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        toast.error('Failed to load products');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchProducts();
+  }, []);
 
   // Filter products by search term and active tab
-  const filteredProducts = mockProducts.filter(product => {
+  const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        product.sku.toLowerCase().includes(searchTerm.toLowerCase());
+                        product.fnsku.toLowerCase().includes(searchTerm.toLowerCase());
     
     if (activeTab === 'all') return matchesSearch;
-    if (activeTab === 'masked') return matchesSearch && !!mockMaskedProducts[product.id];
-    if (activeTab === 'unmasked') return matchesSearch && !mockMaskedProducts[product.id];
+    if (activeTab === 'masked') return matchesSearch && !!maskedProducts[product.id];
+    if (activeTab === 'unmasked') return matchesSearch && !maskedProducts[product.id];
     
     return matchesSearch;
   });
@@ -147,12 +105,66 @@ const ProductManagement = () => {
   };
 
   // Handle SKU generation
-  const handleGenerateSKU = (category: string, productName: string, isMasked: boolean) => {
-    const newSku = generateSKU(category, productName, isMasked);
-    // In a real app, we would save this SKU to the product
-    // For now, just alert the user with the new SKU
-    alert(`Generated SKU: ${newSku}`);
+  const handleGenerateFNSKU = (category: string, productName: string, isMasked: boolean) => {
+    const newFnsku = generateFNSKU(category, productName, isMasked);
+    toast.success(`Generated FNSKU: ${newFnsku}`);
     setSkuGeneratorOpen(false);
+  };
+  
+  // Handle product refresh after creation/update
+  const handleProductUpdated = async () => {
+    setIsLoading(true);
+    try {
+      const dbProducts = await dbConnection.getAllProducts();
+      
+      // Convert DB products to Product and MaskedProduct format
+      const productsList: Product[] = [];
+      const maskedProductsMap: Record<string, MaskedProduct> = {};
+      
+      dbProducts.forEach(dbProduct => {
+        const product: Product = {
+          id: dbProduct.id,
+          name: dbProduct.name,
+          fnsku: dbProduct.fnsku,
+          price: dbProduct.price,
+          stock: dbProduct.stock,
+          description: dbProduct.description,
+          images: dbProduct.images,
+          category: dbProduct.category,
+          createdAt: dbProduct.createdAt,
+          updatedAt: dbProduct.updatedAt,
+        };
+        
+        productsList.push(product);
+        
+        if (dbProduct.isMasked && dbProduct.amazonFnsku) {
+          const maskedProduct: MaskedProduct = {
+            id: `m${dbProduct.id}`,
+            name: `Generic ${dbProduct.name}`,
+            fnsku: dbProduct.amazonFnsku || 'MASK-FNSKU',
+            price: dbProduct.price,
+            description: `Generic version of ${dbProduct.description}`,
+            images: dbProduct.images,
+            realProductId: dbProduct.id,
+            amazonPrice: dbProduct.price * 1.5,
+            amazonFnsku: dbProduct.amazonFnsku,
+            status: 'active',
+            createdAt: dbProduct.createdAt,
+            updatedAt: dbProduct.updatedAt
+          };
+          
+          maskedProductsMap[dbProduct.id] = maskedProduct;
+        }
+      });
+      
+      setProducts(productsList);
+      setMaskedProducts(maskedProductsMap);
+    } catch (error) {
+      console.error('Error refreshing products:', error);
+      toast.error('Failed to refresh products');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -166,9 +178,12 @@ const ProductManagement = () => {
             onClick={() => setSkuGeneratorOpen(true)}
           >
             <Barcode size={16} />
-            <span>Generate SKU</span>
+            <span>Generate FNSKU</span>
           </Button>
-          <Button className="flex items-center gap-2 whitespace-nowrap">
+          <Button 
+            className="flex items-center gap-2 whitespace-nowrap"
+            onClick={() => setNewProductModalOpen(true)}
+          >
             <Plus size={16} />
             <span>Add New Product</span>
           </Button>
@@ -186,11 +201,17 @@ const ProductManagement = () => {
         <SearchFilters searchTerm={searchTerm} onSearchChange={setSearchTerm} />
 
         <TabsContent value="all" className="space-y-4">
-          <ProductTable 
-            products={filteredProducts}
-            maskedProducts={mockMaskedProducts}
-            onViewDetails={handleViewDetails}
-          />
+          {isLoading ? (
+            <div className="p-8 text-center">
+              <p className="text-muted-foreground">Loading products...</p>
+            </div>
+          ) : (
+            <ProductTable 
+              products={filteredProducts}
+              maskedProducts={maskedProducts}
+              onViewDetails={handleViewDetails}
+            />
+          )}
         </TabsContent>
         
         <TabsContent value="masked" className="space-y-4">
@@ -212,15 +233,22 @@ const ProductManagement = () => {
       {modalOpen && selectedProduct && (
         <ProductDetailsModal 
           product={selectedProduct}
-          maskedProduct={mockMaskedProducts[selectedProduct.id] || null}
+          maskedProduct={maskedProducts[selectedProduct.id] || null}
           onClose={() => setModalOpen(false)}
         />
       )}
 
       {skuGeneratorOpen && (
         <SkuGeneratorModal
-          onGenerate={handleGenerateSKU}
+          onGenerate={handleGenerateFNSKU}
           onClose={() => setSkuGeneratorOpen(false)}
+        />
+      )}
+
+      {newProductModalOpen && (
+        <NewProductForm
+          onClose={() => setNewProductModalOpen(false)}
+          onProductCreated={handleProductUpdated}
         />
       )}
     </div>
