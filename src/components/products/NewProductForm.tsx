@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { dbConnection } from '@/utils/database';
 import { toast } from 'sonner';
 import { DbProduct } from '@/utils/types';
+import { generateFNSKU } from '@/utils/skuGenerator';
 
 interface NewProductFormProps {
   onClose: () => void;
@@ -18,7 +19,8 @@ const NewProductForm = ({ onClose, onProductCreated }: NewProductFormProps) => {
     description: '',
     category: '',
     isMasked: false,
-    amazonFnsku: ''
+    amazonFnsku: '',
+    fnskuSource: 'amazon' // Default to amazon as the source
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,6 +38,22 @@ const NewProductForm = ({ onClose, onProductCreated }: NewProductFormProps) => {
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target;
     setProduct(prev => ({ ...prev, [name]: checked }));
+  };
+
+  const handleRadioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setProduct(prev => ({ ...prev, [name]: value }));
+  };
+
+  const generateAutoFNSKU = () => {
+    if (!product.category || !product.name) {
+      toast.error('Product name and category are required to generate FNSKU');
+      return;
+    }
+    
+    const fnsku = generateFNSKU(product.category, product.name, product.isMasked);
+    setProduct(prev => ({ ...prev, amazonFnsku: fnsku }));
+    toast.success(`Generated FNSKU: ${fnsku}`);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -174,16 +192,76 @@ const NewProductForm = ({ onClose, onProductCreated }: NewProductFormProps) => {
             </div>
             
             {product.isMasked && (
-              <div>
-                <label className="block text-sm font-medium mb-1">Amazon FNSKU</label>
-                <input
-                  type="text"
-                  name="amazonFnsku"
-                  className="w-full p-2 border rounded-md"
-                  value={product.amazonFnsku}
-                  onChange={handleChange}
-                  placeholder="Enter Amazon FNSKU"
-                />
+              <div className="space-y-4 border p-4 rounded-md bg-gray-50">
+                <div className="flex items-center space-x-2">
+                  <h4 className="font-medium">FNSKU Options</h4>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center">
+                    <input
+                      type="radio"
+                      id="amazonFnsku"
+                      name="fnskuSource"
+                      value="amazon"
+                      checked={product.fnskuSource === 'amazon'}
+                      onChange={handleRadioChange}
+                      className="mr-2"
+                    />
+                    <label htmlFor="amazonFnsku" className="text-sm">Enter Amazon FNSKU manually</label>
+                  </div>
+                  
+                  <div className="flex items-center">
+                    <input
+                      type="radio"
+                      id="generatedFnsku"
+                      name="fnskuSource"
+                      value="generated"
+                      checked={product.fnskuSource === 'generated'}
+                      onChange={handleRadioChange}
+                      className="mr-2"
+                    />
+                    <label htmlFor="generatedFnsku" className="text-sm">Auto-generate FNSKU</label>
+                  </div>
+                </div>
+                
+                {product.fnskuSource === 'amazon' ? (
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Amazon FNSKU</label>
+                    <input
+                      type="text"
+                      name="amazonFnsku"
+                      className="w-full p-2 border rounded-md"
+                      value={product.amazonFnsku}
+                      onChange={handleChange}
+                      placeholder="Enter Amazon FNSKU"
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-sm font-medium">Generated FNSKU</label>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm"
+                        onClick={generateAutoFNSKU}
+                      >
+                        Generate FNSKU
+                      </Button>
+                    </div>
+                    <input
+                      type="text"
+                      className="w-full p-2 border rounded-md bg-gray-100"
+                      value={product.amazonFnsku}
+                      readOnly
+                      placeholder="FNSKU will appear here after generation"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Click generate to create an FNSKU based on product details
+                    </p>
+                  </div>
+                )}
               </div>
             )}
             
