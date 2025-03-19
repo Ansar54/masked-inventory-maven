@@ -19,18 +19,22 @@ export const useProductData = () => {
       const maskedProductsMap: Record<string, MaskedProduct> = {};
       
       productsList.forEach(product => {
+        // Instead of directly accessing product.amazon_fnsku, we'll check for a property
+        // that might be included in the API response but not in our TypeScript definition
+        const amazonFnsku = (product as any).amazonFnsku || (product as any).amazon_fnsku;
+        
         // If this product has an Amazon FNSKU, create a masked product
-        if (product.amazon_fnsku) {
+        if (amazonFnsku) {
           const maskedProduct: MaskedProduct = {
             id: `m${product.id}`,
             name: `Generic ${product.name}`,
-            fnsku: product.amazon_fnsku,
+            fnsku: amazonFnsku,
             price: product.price,
             description: `Generic version of ${product.description}`,
             images: product.images,
             realProductId: product.id,
             amazonPrice: product.price * 1.5, // Example markup
-            amazonFnsku: product.amazon_fnsku,
+            amazonFnsku: amazonFnsku,
             status: 'active',
             createdAt: product.createdAt,
             updatedAt: product.updatedAt
