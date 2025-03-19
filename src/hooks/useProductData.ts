@@ -15,15 +15,16 @@ export const useProductData = () => {
     setError(null);
     
     try {
+      console.log('Attempting to fetch products from API...');
       const productsList = await api.getAllProducts();
+      console.log('Products fetched successfully:', productsList);
       
       // Convert products to the format we need
       // And build the masked products map
       const maskedProductsMap: Record<string, MaskedProduct> = {};
       
       productsList.forEach(product => {
-        // Instead of directly accessing product.amazon_fnsku, we'll check for a property
-        // that might be included in the API response but not in our TypeScript definition
+        // Check for amazonFnsku property in various formats
         const amazonFnsku = (product as any).amazonFnsku || (product as any).amazon_fnsku;
         
         // If this product has an Amazon FNSKU, create a masked product

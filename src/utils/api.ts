@@ -1,3 +1,4 @@
+
 import { Product, MaskedProduct, DbProduct } from './types';
 import { dbConnection } from './database';
 
@@ -5,16 +6,47 @@ import { dbConnection } from './database';
 const isHostedEnvironment = window.location.hostname !== 'localhost';
 const API_URL = isHostedEnvironment ? '/api' : 'http://localhost:8000/api';
 
+// Helper function to check if backend is available
+const checkBackendConnection = async (): Promise<boolean> => {
+  try {
+    const response = await fetch(`${API_URL}`, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+      // Short timeout to prevent long waits
+      signal: AbortSignal.timeout(3000)
+    });
+    return response.ok;
+  } catch (error) {
+    console.warn('Backend connection test failed:', error);
+    return false;
+  }
+};
+
 export const api = {
   async getAllProducts(): Promise<Product[]> {
     try {
-      // Try to fetch from the backend first
-      const response = await fetch(`${API_URL}/products/`);
+      console.log('Checking backend connection...');
+      const isBackendAvailable = await checkBackendConnection();
+      
+      if (!isBackendAvailable) {
+        console.warn('Backend is not available, using mock data');
+        throw new Error('Backend is not available');
+      }
+      
+      console.log('Fetching products from backend API...');
+      const response = await fetch(`${API_URL}/products/`, {
+        headers: { 'Accept': 'application/json' },
+        // Use a reasonable timeout
+        signal: AbortSignal.timeout(5000)
+      });
+      
       if (!response.ok) {
         throw new Error(`API error: ${response.statusText}`);
       }
       
       const data = await response.json();
+      console.log('API response data:', data);
+      
       return data.map((item: any) => ({
         id: item.id.toString(),
         name: item.name,
@@ -27,9 +59,10 @@ export const api = {
         updatedAt: item.updated_at || item.created_at,
       }));
     } catch (error) {
-      console.warn('Backend fetch failed, using mock data instead');
+      console.warn('Backend fetch failed, using mock data instead:', error);
       // Fallback to mock data if the fetch fails
       const mockProducts = await dbConnection.getAllProducts();
+      console.log('Using mock products:', mockProducts);
       
       return mockProducts.map(item => ({
         id: item.id.toString(),
