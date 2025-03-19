@@ -9,6 +9,7 @@ interface ProductTabContentProps {
   filteredProducts: Product[];
   maskedProducts: Record<string, MaskedProduct>;
   onViewDetails: (product: Product) => void;
+  refreshProducts: () => void; // Add this prop
 }
 
 const ProductTabContent = ({ 
@@ -16,7 +17,8 @@ const ProductTabContent = ({
   activeTab, 
   filteredProducts, 
   maskedProducts, 
-  onViewDetails 
+  onViewDetails,
+  refreshProducts 
 }: ProductTabContentProps) => {
   if (isLoading) {
     return (
@@ -39,6 +41,7 @@ const ProductTabContent = ({
       products={displayedProducts}
       maskedProducts={maskedProducts}
       onViewDetails={onViewDetails}
+      refreshProducts={refreshProducts}
     />
   );
 };

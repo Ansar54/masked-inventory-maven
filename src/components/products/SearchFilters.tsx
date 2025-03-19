@@ -5,10 +5,20 @@ import { Button } from '@/components/ui/button';
 
 interface SearchFiltersProps {
   searchTerm: string;
-  onSearchChange: (value: string) => void;
+  setSearchTerm: (value: string) => void;
+  selectedFilters?: {
+    categories: string[];
+    status: string;
+  };
+  handleFilterByCategory?: (category: string) => void;
 }
 
-const SearchFilters = ({ searchTerm, onSearchChange }: SearchFiltersProps) => {
+const SearchFilters = ({ 
+  searchTerm, 
+  setSearchTerm, 
+  selectedFilters, 
+  handleFilterByCategory 
+}: SearchFiltersProps) => {
   return (
     <div className="flex flex-col md:flex-row gap-4 animate-slide-up mb-4">
       <div className="relative flex-1">
@@ -18,7 +28,7 @@ const SearchFilters = ({ searchTerm, onSearchChange }: SearchFiltersProps) => {
           placeholder="Search products..."
           className="w-full pl-10 pr-4 py-2 border rounded-md focus:ring-2 focus:ring-primary/20 focus-visible:outline-none"
           value={searchTerm}
-          onChange={(e) => onSearchChange(e.target.value)}
+          onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
       <Button variant="outline" size="default" className="gap-2">

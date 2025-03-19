@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { dbConnection } from '@/utils/database';
@@ -8,10 +7,10 @@ import { generateFNSKU } from '@/utils/skuGenerator';
 
 interface NewProductFormProps {
   onClose: () => void;
-  onProductCreated: () => void;
+  onProductAdded: () => void; // Add this prop to the interface
 }
 
-const NewProductForm = ({ onClose, onProductCreated }: NewProductFormProps) => {
+const NewProductForm = ({ onClose, onProductAdded }: NewProductFormProps) => {
   const [product, setProduct] = useState({
     name: '',
     price: 0,
@@ -82,7 +81,7 @@ const NewProductForm = ({ onClose, onProductCreated }: NewProductFormProps) => {
       
       await dbConnection.createProduct(newProduct);
       toast.success('Product created successfully');
-      onProductCreated();
+      onProductAdded();
       onClose();
     } catch (error) {
       console.error('Error creating product:', error);
