@@ -1,8 +1,7 @@
-
 import { Product, MaskedProduct, DbProduct } from './types';
 import { dbConnection } from './database';
 
-// Change this to use mock data when running in a hosted environment
+// Change this to use only real data from PostgreSQL database
 const isHostedEnvironment = window.location.hostname !== 'localhost';
 const API_URL = isHostedEnvironment ? '/api' : 'http://localhost:8000/api';
 
@@ -24,58 +23,39 @@ const checkBackendConnection = async (): Promise<boolean> => {
 
 export const api = {
   async getAllProducts(): Promise<Product[]> {
-    try {
-      console.log('Checking backend connection...');
-      const isBackendAvailable = await checkBackendConnection();
-      
-      if (!isBackendAvailable) {
-        console.warn('Backend is not available, using mock data');
-        throw new Error('Backend is not available');
-      }
-      
-      console.log('Fetching products from backend API...');
-      const response = await fetch(`${API_URL}/products/`, {
-        headers: { 'Accept': 'application/json' },
-        // Use a reasonable timeout
-        signal: AbortSignal.timeout(5000)
-      });
-      
-      if (!response.ok) {
-        throw new Error(`API error: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      console.log('API response data:', data);
-      
-      return data.map((item: any) => ({
-        id: item.id.toString(),
-        name: item.name,
-        price: item.price,
-        stock: item.stock,
-        description: item.description,
-        images: item.images,
-        category: item.category,
-        createdAt: item.created_at,
-        updatedAt: item.updated_at || item.created_at,
-      }));
-    } catch (error) {
-      console.warn('Backend fetch failed, using mock data instead:', error);
-      // Fallback to mock data if the fetch fails
-      const mockProducts = await dbConnection.getAllProducts();
-      console.log('Using mock products:', mockProducts);
-      
-      return mockProducts.map(item => ({
-        id: item.id.toString(),
-        name: item.name,
-        price: item.price,
-        stock: item.stock,
-        description: item.description,
-        images: item.images,
-        category: item.category,
-        createdAt: item.createdAt,
-        updatedAt: item.updatedAt || item.createdAt,
-      }));
+    console.log('Checking backend connection...');
+    const isBackendAvailable = await checkBackendConnection();
+    
+    if (!isBackendAvailable) {
+      console.error('Backend is not available. Make sure the PostgreSQL database and backend server are running.');
+      throw new Error('Backend connection failed. Please check that the server is running.');
     }
+    
+    console.log('Fetching products from PostgreSQL database...');
+    const response = await fetch(`${API_URL}/products/`, {
+      headers: { 'Accept': 'application/json' },
+      // Use a reasonable timeout
+      signal: AbortSignal.timeout(8000)
+    });
+    
+    if (!response.ok) {
+      throw new Error(`API error: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log('Products fetched from PostgreSQL:', data);
+    
+    return data.map((item: any) => ({
+      id: item.id.toString(),
+      name: item.name,
+      price: item.price,
+      stock: item.stock,
+      description: item.description,
+      images: item.images,
+      category: item.category,
+      createdAt: item.created_at,
+      updatedAt: item.updated_at || item.created_at,
+    }));
   },
 
   async getProduct(id: string): Promise<Product> {
@@ -164,51 +144,29 @@ export const api = {
   },
 
   async maskProduct(id: string, amazonFnsku: string): Promise<Product> {
-    try {
-      const response = await fetch(`${API_URL}/products/${id}/mask`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ amazon_fnsku: amazonFnsku }),
-      });
-      
-      if (!response.ok) {
-        throw new Error(`API error: ${response.statusText}`);
-      }
-      
-      const item = await response.json();
-      return {
-        id: item.id.toString(),
-        name: item.name,
-        price: item.price,
-        stock: item.stock,
-        description: item.description,
-        images: item.images,
-        category: item.category,
-        createdAt: item.created_at,
-        updatedAt: item.updated_at || item.created_at,
-      };
-    } catch (error) {
-      console.warn('Backend call failed, using mock data instead');
-      // Fallback to mock data
-      const updatedProduct = await dbConnection.updateProduct(id, { amazonFnsku, isMasked: true });
-      
-      if (!updatedProduct) {
-        throw new Error('Product not found');
-      }
-      
-      return {
-        id: updatedProduct.id,
-        name: updatedProduct.name,
-        price: updatedProduct.price,
-        stock: updatedProduct.stock,
-        description: updatedProduct.description,
-        images: updatedProduct.images,
-        category: updatedProduct.category,
-        createdAt: updatedProduct.createdAt,
-        updatedAt: updatedProduct.updatedAt,
-      };
+    const response = await fetch(`${API_URL}/products/${id}/mask`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ amazon_fnsku: amazonFnsku }),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`API error: ${response.statusText}`);
     }
+    
+    const item = await response.json();
+    return {
+      id: item.id.toString(),
+      name: item.name,
+      price: item.price,
+      stock: item.stock,
+      description: item.description,
+      images: item.images,
+      category: item.category,
+      createdAt: item.created_at,
+      updatedAt: item.updated_at || item.created_at,
+    };
   },
 };

@@ -15,7 +15,7 @@ export const useProductData = () => {
     setError(null);
     
     try {
-      console.log('Attempting to fetch products from API...');
+      console.log('Fetching real-time products from PostgreSQL database...');
       const productsList = await api.getAllProducts();
       console.log('Products fetched successfully:', productsList);
       
@@ -51,10 +51,10 @@ export const useProductData = () => {
       setProducts(productsList);
       setMaskedProducts(maskedProductsMap);
     } catch (error) {
-      console.error('Error fetching products:', error);
+      console.error('Error fetching products from PostgreSQL:', error);
       setError(error instanceof Error ? error : new Error('Unknown error'));
-      toast.error('Failed to load products', { 
-        description: 'Using fallback data instead'
+      toast.error('Failed to load products from database', { 
+        description: 'Please check that the PostgreSQL database is running'
       });
     } finally {
       setIsLoading(false);

@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 import json
@@ -6,6 +5,7 @@ from typing import List, Optional
 from database import get_db
 from models import Product
 import schemas
+from sqlalchemy import func
 
 router = APIRouter(tags=["products"])
 
@@ -39,8 +39,15 @@ def create_product(product: schemas.ProductCreate, db: Session = Depends(get_db)
     # Convert list of images to string for storage
     images_str = json.dumps(product.images)
     
+    # Get the latest product id
+    latest_product = db.query(func.max(Product.id)).scalar() or 0
+    next_id = latest_product + 1
+    
+    # Create incremental pid
+    incremental_pid = str(next_id)
+    
     db_product = Product(
-        pid=product.pid,
+        pid=incremental_pid,
         name=product.name,
         price=product.price,
         stock=product.stock,
