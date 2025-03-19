@@ -8,9 +8,12 @@ export const useProductData = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [maskedProducts, setMaskedProducts] = useState<Record<string, MaskedProduct>>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   const fetchProducts = async () => {
     setIsLoading(true);
+    setError(null);
+    
     try {
       const productsList = await api.getAllProducts();
       
@@ -48,7 +51,10 @@ export const useProductData = () => {
       setMaskedProducts(maskedProductsMap);
     } catch (error) {
       console.error('Error fetching products:', error);
-      toast.error('Failed to load products');
+      setError(error instanceof Error ? error : new Error('Unknown error'));
+      toast.error('Failed to load products', { 
+        description: 'Using fallback data instead'
+      });
     } finally {
       setIsLoading(false);
     }
@@ -62,6 +68,7 @@ export const useProductData = () => {
     products,
     maskedProducts,
     isLoading,
+    error,
     refreshProducts: fetchProducts
   };
 };
