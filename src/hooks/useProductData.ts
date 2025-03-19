@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
-import { Product, MaskedProduct, DbProduct } from '@/utils/types';
-import { dbConnection } from '@/utils/database';
+import { Product, MaskedProduct } from '@/utils/types';
+import { api } from '@/utils/api';
 import { toast } from 'sonner';
 
 export const useProductData = () => {
@@ -12,46 +12,31 @@ export const useProductData = () => {
   const fetchProducts = async () => {
     setIsLoading(true);
     try {
-      await dbConnection.connect();
-      const dbProducts = await dbConnection.getAllProducts();
+      const productsList = await api.getAllProducts();
       
-      // Convert DB products to Product and MaskedProduct format
-      const productsList: Product[] = [];
+      // Convert products to the format we need
+      // And build the masked products map
       const maskedProductsMap: Record<string, MaskedProduct> = {};
       
-      dbProducts.forEach(dbProduct => {
-        const product: Product = {
-          id: dbProduct.id,
-          name: dbProduct.name,
-          price: dbProduct.price,
-          stock: dbProduct.stock,
-          description: dbProduct.description,
-          images: dbProduct.images,
-          category: dbProduct.category,
-          createdAt: dbProduct.createdAt,
-          updatedAt: dbProduct.updatedAt,
-        };
-        
-        productsList.push(product);
-        
-        // If this product has an Amazon FNSKU, it's masked
-        if (dbProduct.isMasked && dbProduct.amazonFnsku) {
+      productsList.forEach(product => {
+        // If this product has an Amazon FNSKU, create a masked product
+        if (product.amazon_fnsku) {
           const maskedProduct: MaskedProduct = {
-            id: `m${dbProduct.id}`,
-            name: `Generic ${dbProduct.name}`,
-            fnsku: dbProduct.amazonFnsku || 'MASK-FNSKU', // Store FNSKU here
-            price: dbProduct.price,
-            description: `Generic version of ${dbProduct.description}`,
-            images: dbProduct.images,
-            realProductId: dbProduct.id,
-            amazonPrice: dbProduct.price * 1.5, // Example markup
-            amazonFnsku: dbProduct.amazonFnsku,
+            id: `m${product.id}`,
+            name: `Generic ${product.name}`,
+            fnsku: product.amazon_fnsku,
+            price: product.price,
+            description: `Generic version of ${product.description}`,
+            images: product.images,
+            realProductId: product.id,
+            amazonPrice: product.price * 1.5, // Example markup
+            amazonFnsku: product.amazon_fnsku,
             status: 'active',
-            createdAt: dbProduct.createdAt,
-            updatedAt: dbProduct.updatedAt
+            createdAt: product.createdAt,
+            updatedAt: product.updatedAt
           };
           
-          maskedProductsMap[dbProduct.id] = maskedProduct;
+          maskedProductsMap[product.id] = maskedProduct;
         }
       });
       

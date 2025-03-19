@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Package, 
@@ -11,7 +10,7 @@ import {
 import { toast } from 'sonner';
 import { Product, MaskedProduct } from '@/utils/types';
 import MaskProductModal from './MaskProductModal';
-import { dbConnection } from '@/utils/database';
+import { api } from '@/utils/api';
 import { Button } from '@/components/ui/button';
 
 interface ProductTableProps {
@@ -33,16 +32,14 @@ const ProductTable = ({ products, maskedProducts, onViewDetails, refreshProducts
 
   const handleMaskProduct = async (productId: string, amazonFnsku: string) => {
     try {
-      await dbConnection.connect();
-      await dbConnection.updateProduct(productId, {
-        amazonFnsku,
-        isMasked: true,
-      });
+      await api.maskProduct(productId, amazonFnsku);
       
+      toast.success('Product masked successfully');
       // Force refresh the product list to show the changes
       refreshProducts();
     } catch (error) {
       console.error('Error masking product:', error);
+      toast.error('Failed to mask product');
       throw error;
     }
   };
@@ -51,8 +48,7 @@ const ProductTable = ({ products, maskedProducts, onViewDetails, refreshProducts
     if (window.confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
       setIsDeleting(productId);
       try {
-        await dbConnection.connect();
-        const success = await dbConnection.deleteProduct(productId);
+        const success = await api.deleteProduct(productId);
         
         if (success) {
           toast.success('Product deleted successfully');
